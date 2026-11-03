@@ -1,41 +1,132 @@
 <!doctype html>
-<html lang="en"><head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>BelAgent | Wallet Approval POC</title>
-  <link rel="stylesheet" href="/style.css"><script type="module" src="/app.js"></script>
-</head><body>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
   <div class="shell">
-    <header class="topbar"><div class="brand"><span class="brandmark">B</span><div><strong>BelAgent</strong><small>Privacy-first agent payments</small></div></div><span class="badge" id="mode">POC • LOCAL</span></header>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brandmark">B</span>
+        <div>
+          <strong>BelAgent</strong>
+          <small>Privacy-first agent payment approval</small>
+        </div>
+      </div>
+      <span class="badge" id="mode">POC • LOCAL</span>
+    </header>
+
     <main>
-      <div class="intro"><span class="eyebrow">BELDEX TESTNET · HUMAN-IN-THE-LOOP</span><h1>AI can prepare a payment.<br><span>You decide if it happens.</span></h1><p>A local MCP server verifies policy, then a browser wallet asks for human approval. Your private keys never enter BelAgent.</p></div>
+      <div class="intro">
+        <span class="eyebrow">BELDEX TESTNET · HUMAN-IN-THE-LOOP</span>
+        <h1>AI can prepare a payment.<br><span>You decide if it happens.</span></h1>
+        <p>A local MCP server enforces spending caps and safety policy, then prompts your Beldex browser wallet for explicit approval and signing. Your private keys never touch BelAgent.</p>
+      </div>
+
       <div class="columns">
         <section class="surface">
-          <div class="sectionhead"><div><span class="eyebrow">01 / PAYMENT REQUEST</span><h2>Review payment intent</h2></div><span class="chip" id="state">Loading…</span></div>
-          <div id="notice" class="notice" hidden></div>
-          <div id="payment" hidden>
-            <div class="smalltitle">Recipient address <span class="muted">(full testnet address)</span></div><div class="address" id="destination"></div>
-            <div class="amountline"><div><span class="smalltitle">Amount</span><div class="amount"><span id="amount"></span> <em>BDX</em></div></div><div class="network">TESTNET ONLY</div></div>
-            <div class="divider"></div>
-            <div class="pair"><span>Purpose</span><strong id="purpose"></strong></div>
-            <div class="pair"><span>Requested by</span><strong id="requester"></strong></div>
-            <div class="pair"><span>Request expires</span><strong id="expiry"></strong></div>
-            <div class="pair"><span>Intent hash</span><code id="hash"></code></div>
-            <div class="divider"></div>
-            <div class="actions"><button class="primary" id="approve">Continue to wallet approval</button><button class="secondary" id="decline">Decline request</button></div>
+          <div class="sectionhead">
+            <div>
+              <span class="eyebrow">01 / PAYMENT REQUEST</span>
+              <h2>Review payment intent</h2>
+            </div>
+            <span class="chip" id="state">Loading…</span>
           </div>
+
+          <div id="notice" class="notice" hidden></div>
+          <div id="wallet-alert" class="notice warning" hidden></div>
+
+          <div id="payment" hidden>
+            <div class="smalltitle-row">
+              <span class="smalltitle">Recipient address <span class="muted">(full testnet address)</span></span>
+              <button type="button" class="btn-copy" id="copy-dest" title="Copy address">📋 Copy</button>
+            </div>
+            <div class="address" id="destination"></div>
+
+            <div class="amountline">
+              <div>
+                <span class="smalltitle">Amount</span>
+                <div class="amount"><span id="amount"></span> <em>BDX</em></div>
+              </div>
+              <div class="network">TESTNET ONLY</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="pair">
+              <span>Purpose</span>
+              <strong id="purpose"></strong>
+            </div>
+
+            <div class="pair">
+              <span>Requested by</span>
+              <strong id="requester"></strong>
+            </div>
+
+            <div class="pair">
+              <span>Request expires</span>
+              <strong id="expiry"></strong>
+            </div>
+
+            <div class="pair">
+              <span>Intent hash</span>
+              <div class="code-copy-row">
+                <code id="hash"></code>
+                <button type="button" class="btn-copy-small" id="copy-hash" title="Copy intent hash">📋</button>
+              </div>
+            </div>
+
+            <div id="tx-row" class="pair tx-pair" hidden>
+              <span>Transaction hash</span>
+              <div class="code-copy-row">
+                <code id="tx-hash"></code>
+                <button type="button" class="btn-copy-small" id="copy-tx" title="Copy tx hash">📋</button>
+              </div>
+            </div>
+
+            <div id="explorer-row" class="explorer-box" hidden>
+              <a id="explorer-link" href="#" target="_blank" rel="noopener noreferrer" class="explorer-btn">
+                🔍 View in Beldex Testnet Explorer ↗
+              </a>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="actions">
+              <button class="primary" id="approve">Continue to wallet approval</button>
+              <button class="secondary" id="decline">Decline request</button>
+            </div>
+          </div>
+
           <div class="status" id="status">Checking for an approval request…</div>
         </section>
+
         <aside class="aside">
-          <div class="panel"><span class="eyebrow">02 / SAFETY BOUNDARIES</span><h3>What the agent cannot do</h3>
+          <div class="panel">
+            <span class="eyebrow">02 / SAFETY BOUNDARIES</span>
+            <h3>What the agent cannot do</h3>
             <div class="check"><b>✓</b><span>Read recovery phrases or private spending keys</span></div>
-            <div class="check"><b>✓</b><span>Sign or send funds directly from the MCP process</span></div>
-            <div class="check"><b>✓</b><span>Bypass the wallet’s independent approval prompt</span></div>
-            <div class="check"><b>✓</b><span>Change an approved amount or recipient in this request</span></div>
+            <div class="check"><b>✓</b><span>Sign or broadcast funds directly from Node/MCP</span></div>
+            <div class="check"><b>✓</b><span>Bypass the wallet’s independent confirmation prompt</span></div>
+            <div class="check"><b>✓</b><span>Alter an approved amount or recipient after intent creation</span></div>
           </div>
-          <div class="panel lighter"><span class="eyebrow">03 / TRANSPARENCY</span><h3>Demo vs. live</h3><p><strong>Demo mode</strong> simulates the wallet outcome, without creating a blockchain transaction. <strong>Testnet mode</strong> calls the injected Beldex wallet, still requiring an actual user decision.</p><p id="policy"></p><div class="notice subtle">A wallet-returned transaction hash is marked <strong>unverified</strong> until independently reconciled. This POC never claims on-chain settlement based only on browser data.</div></div>
+
+          <div class="panel lighter">
+            <span class="eyebrow">03 / POLICY & TRANSPARENCY</span>
+            <h3>Demo vs. live</h3>
+            <p><strong>Demo mode</strong> simulates the approval flow without touching a blockchain. <strong>Testnet mode</strong> invokes your installed Beldex browser wallet, strictly requiring manual confirmation.</p>
+            <p id="policy"></p>
+            <div class="notice subtle">A wallet-returned transaction hash is labeled <strong>submitted_unverified</strong> until independently verified. BelAgent never fabricates on-chain settlement receipts.</div>
+          </div>
         </aside>
       </div>
-      <footer>BelAgent Proof of Concept v0.1 · Localhost only · No mainnet support · No telemetry</footer>
+
+      <footer>BelAgent Proof of Concept v0.2 · Localhost only · No mainnet support · Zero telemetry</footer>
     </main>
   </div>
-</body></html>
+</body>
+</html>
