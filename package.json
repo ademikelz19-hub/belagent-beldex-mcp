@@ -1,0 +1,14 @@
+{
+  "name": "belagent-mcp-poc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Non-custodial Beldex agent payment approval proof of concept",
+  "type": "module",
+  "engines": {"node": ">=20"},
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "demo": "node scripts/demo-client.mjs"
+  },
+  "license": "MIT"
+}
